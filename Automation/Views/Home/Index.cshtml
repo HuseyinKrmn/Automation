@@ -1,0 +1,415 @@
+﻿@model Tuple<IEnumerable<SelectListItem>, IEnumerable<SelectListItem>, IEnumerable<SelectListItem>>
+@{
+    ViewBag.Title = "Index";
+}
+
+<script type="text/javascript">
+
+    // İşlemler
+    $(document).ready(function () {
+        $("#Urun").val(0);
+        $("#Urun").change(function () {
+            var UrunId = $("#Urun").val();
+            GetUrunBirimFiyat(UrunId);
+        });
+
+        $("input[type=text]").change(function () {
+            Hesapla();
+        });
+
+        $("input[type=text]").keyup(function () {
+            BakiyeHesapla();
+        });
+
+        $("#BtnListeyeEkle").click(function () {
+            ListeyeEkle();
+        });
+
+        $("#btnOdeme").click(function () {
+            SonToplam();
+        });
+
+    });
+
+    // Veri tabanına ekleme işlemleri
+    function SonToplam() {
+        var objSiparisModel = {};
+        var SiparisDetayModelListesi = new Array();
+        //SiparisDetayModelListesi
+
+        objSiparisModel.OdemeTuru_Id = $("#OdemeTuru").val();
+        objSiparisModel.Musteri_Id = $("#Musteriler").val();
+        objSiparisModel.SonToplam = $("#txtToplamOdeme").val();
+
+        $("#tblUrunlerListesi").find("tr:gt(0)").each(function myfunction() {
+            var SiparisDetayModel = {};
+            SiparisDetayModel.Toplam = parseFloat($(this).find("td:eq(5)").text());
+            SiparisDetayModel.UrunId = parseFloat($(this).find("td:eq(0)").text());
+            SiparisDetayModel.BirimFiyat = parseFloat($(this).find("td:eq(2)").text());
+            SiparisDetayModel.Miktar = parseFloat($(this).find("td:eq(3)").text());
+            SiparisDetayModel.Indirim = parseFloat($(this).find("td:eq(4)").text());
+
+            SiparisDetayModelListesi.push(SiparisDetayModel);
+        });
+
+        objSiparisModel.SiparisDetayModelListesi = SiparisDetayModelListesi;
+
+        $.ajax({
+            async: true,
+            type: 'POST',
+            dataType: 'JSON',
+            contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify(objSiparisModel),
+            url: '/Home/Index',
+            success: function (data) {
+                alert(data);
+            },
+            error: function () {
+                alert("Veri eklerken sorun oluştu.");
+            }
+        })
+    }
+
+    // toggle hesaplama yeri
+    function BakiyeHesapla() {
+        var _SonMiktar = $("#txtToplamOdeme").val();
+        var _OdemeMiktari = $("#txtOdemeMiktari").val();
+        var _ToplamGetiri = parseFloat(_OdemeMiktari) - parseFloat(_SonMiktar);
+        var _BakiyeTutari = parseFloat(_SonMiktar) - parseFloat(_OdemeMiktari) + parseFloat(_ToplamGetiri);
+        $("#txtBakiyeTutari").val(parseFloat(_BakiyeTutari).toFixed(2));
+        $("#txtToplamGetiri").val(parseFloat(_ToplamGetiri).toFixed(2));
+        if (parseFloat(_BakiyeTutari) == 0) {
+            $("#btnOdeme").removeAttr("disabled");
+        }
+        else {
+            $("#btnOdeme").attr("disabled", "disabled");
+        }
+        
+    }
+
+    // Ürün Silme
+    function UrunSil(UrunId) {
+        $(UrunId).closest('tr').remove();
+    }
+
+    // Alt taraftaki liste kısmına ekleme işlemi
+    function ListeyeEkle() {
+        var _tblUrunListesi = $("#tblUrunlerListesi");
+        var _BirimFiyat = $("#TxtBirimFiyat").val();
+        var _Miktar = $("#TxtMiktar").val();
+        var _Indirim = $("#TxtIndirim").val();
+        var _UrunId = $("#Urun").val();
+        var _UrunIsmi = $("#Urun option:selected").text();
+        var _Toplam = (_BirimFiyat * _Miktar) - _Indirim;
+
+        var UrunListe = "<tr><td hidden>" + _UrunId + "</td><td>" + _UrunIsmi + "</td><td>" + parseFloat(_BirimFiyat).toFixed(2) + "</td><td>" + parseFloat(_Miktar).toFixed(2)
+            + "</td><td>" + parseFloat(_Indirim).toFixed(2) + "</td><td>" + parseFloat(_Toplam).toFixed(2) + "</td><td> <input type='button' name='Sil' value='Sil' class='btn btn-danger' onclick='UrunSil(this)'  /></td></tr>";
+
+        if (_UrunId == null) {
+            alert("Ürün Seçiniz.")
+        }
+        else {
+            _tblUrunListesi.append(UrunListe);
+            UrunDuzenle();
+            SonUrunToplami();
+        }
+        //_tblUrunListesi.append(UrunListe);
+        //UrunDuzenle();
+    }
+
+    // Son Toplama işlemi
+    function SonUrunToplami() {
+        $("#TxtSonUrunTaplami").val("0.00");
+        var SonToplam = 0.00;
+        $("#tblUrunlerListesi").find("tr:gt(0)").each(function myfunction() {
+            var Toplam = parseFloat($(this).find("td:eq(5)").text());
+            SonToplam += Toplam;
+        });
+
+        $("#TxtSonUrunTaplami").val(parseFloat(SonToplam).toFixed(2));
+        $("#txtToplamOdeme").val(parseFloat(SonToplam).toFixed(2));
+        $("#txtBakiyeTutari").val(parseFloat(SonToplam).toFixed(2));
+    }
+
+    // Ekleme işleminden sonraki inputların içi
+    function UrunDuzenle() {
+        $("#TxtBirimFiyat").val('');
+        $("#TxtMiktar").val('');
+        $("#TxtIndirim").val('0.00');
+        $("#Urun").val(0);
+        $("#TxtToplam").val("")
+    }
+
+    // Hesaplama İşlemleri
+    function Hesapla() {
+        var _BirimFiyat = $("#TxtBirimFiyat").val();
+        var _Miktar = $("#TxtMiktar").val();
+        var _Indirim = $("#TxtIndirim").val();
+
+        var _Toplam = (_BirimFiyat * _Miktar) - _Indirim;
+
+        $("#TxtToplam").val(parseFloat(_Toplam).toFixed(2));
+    }
+
+    // Veri tabanından birim fiyatları çekdiğimiz bölüm
+    function GetUrunBirimFiyat(UrunId) {
+        $.ajax({
+            asnc: true,
+            type: 'GET',
+            dataType: 'JSON',
+            contentType: 'apllication/json; charset=utf-8',
+            data: { UrunId: UrunId },
+            url: '/home/GetUrunBirimFiyat',
+            success: function (data) {
+                $("#TxtBirimFiyat").val(parseFloat(data).toFixed(2));
+            },
+            Error: function () {
+                alert("Birim fiyatı alırken hata oluştu.");
+            }
+        })
+    }
+
+</script>
+
+
+
+
+<style>
+    fieldset {
+        border: 1px solid #ddd !important;
+        margin: 0px;
+        padding: 10px;
+        position: center;
+        border-radius: 4px;
+        background-color: #f5f5f5;
+        padding-left: 10px !important;
+    }
+
+
+    legend {
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 0px;
+        width: 35%;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 5px 5px 5px 10px;
+        background-color: #ffffff;
+    }
+
+    .as {
+        width: 100% !important;
+    }
+
+    /* .modal{
+        text-align:center;
+        padding:0!important;
+    }
+    .modal:before{
+        content:'';
+        display:inline-block;
+        height:100%;
+        vertical-align:middle;
+        margin-right:-4px;
+    }
+
+    .modal-dialog{
+        display:inline-block;
+        text-align:left;
+        vertical-align:middle;
+    }*/
+
+
+
+</style>
+
+
+
+
+<!-- Sayfanın üst kısmı -->
+<fieldset>
+    <legend>
+        Restorant
+    </legend>
+    <div class="container">
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="form-group">
+                    Masalar :
+                    @Html.DropDownList("Musteriler", new SelectList(Model.Item1, "Value", "Text"),
+                            new { @class = "form-control" })
+                </div>
+            </div>
+
+
+            <div class="col-md-4">
+                <div class="form-group">
+                    Ödeme Türü :
+                    @Html.DropDownList("OdemeTuru", new SelectList(Model.Item3, "Value", "Text"),
+                            new { @class = "form-control" })
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="form-group">
+                    Sepet Toplam :
+                    <input type="text" style="text-align:right" name="FinalTotal" value="0.00" readonly="readonly" id="TxtSonUrunTaplami" class="form-control" />
+                </div>
+            </div>
+
+        </div>
+    </div>
+</fieldset>
+
+<!-- Orta kısmı -->
+<fieldset>
+    <legend>
+        Ürünler
+    </legend>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="form-group">
+                    Ürün :
+                    @Html.DropDownList("Urun", new SelectList(Model.Item2, "Value", "Text"),
+                            new { @class = "form-control" })
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="form-group">
+                    Birim Fiyat :
+                    <input type="text" style="text-align:right" readonly="readonly" id="TxtBirimFiyat" value="0.00₺" name="BirimFiyat" class="form-control" />
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="form-group">
+                    Miktar :
+                    <input type="text" style="text-align:right" id="TxtMiktar" value="0.00" name="Miktar" class="form-control" />
+                </div>
+            </div>
+
+        </div>
+
+
+        <div class="row">
+
+
+            <div class="col-md-4">
+                <div class="form-group">
+                    İndirim :
+                    <input type="text" style="text-align:right" id="TxtIndirim" value="0.00" name="Indirim" class="form-control" />
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="form-group">
+                    Toplam :
+                    <input type="text" style="text-align:right" readonly="readonly" id="TxtToplam" value="0.00" name="Toplam" class="form-control" />
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="form-group">
+                    <input type="button" style="margin-top:20px" name="ListeyeEkle" value="Listeye Ekle" id="BtnListeyeEkle" class="btn btn-success" />
+                </div>
+            </div>
+
+        </div>
+
+
+
+
+
+
+    </div>
+</fieldset>
+
+<!-- En alt kısım(tablo kısmı) -->
+<fieldset>
+    <legend>
+        Ürünlerin Listesi
+    </legend>
+    <table style="width:100%" id="tblUrunlerListesi">
+        <thead>
+            <tr>
+                <th hidden>
+                    Ürün Id
+                </th>
+                <th>
+                    Ürün İsmi
+                </th>
+                <th>
+                    Birim Fiyat
+                </th>
+                <th>
+                    Miktar
+                </th>
+                <th>
+                    İndirim
+                </th>
+                <th>
+                    Toplam
+                </th>
+                <th>
+                    Eylem
+                </th>
+            </tr>
+        </thead>
+    </table>
+</fieldset>
+
+<!-- Kontrol Butonu -->
+<div style="margin-top:20px">
+    <input data-backdrop="static" data-keydrop="false" data-toggle="modal" data-target="#divOdeme" type="button" style="float:right" name="kaydet" value="Konrtol Et" id="BtnKaydet" class="btn btn-primary" />
+</div>
+
+<!-- kontrol sayfası -->
+<div id="divOdeme" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Ödeme</h4>
+            </div>
+
+            <div class="modal-body">
+                <div class="container as">
+                    <div class="row">
+                        <div class="form-group col-md-6">
+                            Toplam Ödeme :
+                            <input type="text" style="text-align:right" id="txtToplamOdeme" readonly="readonly" value="0.00" class="form-control" />
+                        </div>
+                        <div class="form-group col-md-6">
+                            Ödenen Miktar :
+                            <input type="text" style="text-align:right" id="txtOdemeMiktari" value="0.00" class="form-control" />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="form-group col-md-6">
+                            Geri Ödenecek Tutar :
+                            <input type="text" style="text-align:right" readonly="readonly" id="txtToplamGetiri" value="0.00" class="form-control" />
+                        </div>
+                        <div class="form-group col-md-6">
+                            Bakiye Tutarı :
+                            <input type="text" style="text-align:right" readonly="readonly" id="txtBakiyeTutari" value="0.00" class="form-control" />
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+
+            <div class="modal-footer">
+                <button class="btn btn-success" id="btnOdeme" value="Öde">Öde</button>
+                <button class="btn btn-danger" id="btnClose" data-dismiss="modal" value="Kapat">Kapat</button>
+            </div>
+
+
+
+        </div>
+    </div>
+</div>

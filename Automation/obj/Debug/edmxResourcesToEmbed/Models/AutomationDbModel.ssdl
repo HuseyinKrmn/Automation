@@ -1,0 +1,82 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Schema Namespace="AutomationDbModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+  <EntityType Name="Musteriler">
+    <Key>
+      <PropertyRef Name="Musteri_Id" />
+    </Key>
+    <Property Name="Musteri_Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+    <Property Name="Musteri_Ad" Type="nvarchar" MaxLength="50" Nullable="false" />
+  </EntityType>
+  <EntityType Name="OdemeTuru">
+    <Key>
+      <PropertyRef Name="OdemeTuru_Id" />
+    </Key>
+    <Property Name="OdemeTuru_Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+    <Property Name="OdemeTuru_Ismi" Type="nvarchar" MaxLength="50" Nullable="false" />
+  </EntityType>
+  <EntityType Name="Urunler">
+    <Key>
+      <PropertyRef Name="Urun_Id" />
+    </Key>
+    <Property Name="Urun_Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+    <Property Name="Urun_Ismi" Type="nvarchar" MaxLength="50" Nullable="false" />
+    <Property Name="Urun_Fiyat" Type="decimal" Precision="18" Scale="2" Nullable="false" />
+  </EntityType>
+  <EntityType Name="Islemler">
+    <Key>
+      <PropertyRef Name="Islem_Id" />
+    </Key>
+    <Property Name="Islem_Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+    <Property Name="Urun_Id" Type="int" Nullable="false" />
+    <Property Name="Miktar" Type="decimal" Precision="18" Scale="2" Nullable="false" />
+    <Property Name="IslemTarihi" Type="datetime" Nullable="false" />
+    <Property Name="tip_Id" Type="int" />
+  </EntityType>
+  <EntityType Name="SiparisDetay">
+    <Key>
+      <PropertyRef Name="SiparisDetayi_Id" />
+    </Key>
+    <Property Name="SiparisDetayi_Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+    <Property Name="SiparisId" Type="int" Nullable="false" />
+    <Property Name="Urun_Id" Type="int" Nullable="false" />
+    <Property Name="BirimFiyat" Type="decimal" Precision="18" Scale="2" Nullable="false" />
+    <Property Name="Miktar" Type="decimal" Precision="18" Scale="2" Nullable="false" />
+    <Property Name="Indirim" Type="decimal" Precision="18" Scale="2" Nullable="false" />
+    <Property Name="Toplam" Type="decimal" Precision="18" Scale="2" Nullable="false" />
+  </EntityType>
+  <EntityType Name="Siparisler">
+    <Key>
+      <PropertyRef Name="SiparisId" />
+    </Key>
+    <Property Name="SiparisId" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+    <Property Name="OdemeTuru_Id" Type="int" Nullable="false" />
+    <Property Name="Musteri_Id" Type="int" Nullable="false" />
+    <Property Name="SiparisNo" Type="varchar" MaxLength="50" Nullable="false" />
+    <Property Name="SiparisGun" Type="datetime" Nullable="false" />
+    <Property Name="SonToplam" Type="decimal" Precision="18" Scale="2" Nullable="false" />
+  </EntityType>
+  <Association Name="FK_SiparisDetay_Siparisler">
+    <End Role="Siparisler" Type="Self.Siparisler" Multiplicity="1" />
+    <End Role="SiparisDetay" Type="Self.SiparisDetay" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Siparisler">
+        <PropertyRef Name="SiparisId" />
+      </Principal>
+      <Dependent Role="SiparisDetay">
+        <PropertyRef Name="SiparisId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <EntityContainer Name="AutomationDbModelStoreContainer">
+    <EntitySet Name="Musteriler" EntityType="Self.Musteriler" Schema="Master" store:Type="Tables" />
+    <EntitySet Name="OdemeTuru" EntityType="Self.OdemeTuru" Schema="Master" store:Type="Tables" />
+    <EntitySet Name="Urunler" EntityType="Self.Urunler" Schema="Master" store:Type="Tables" />
+    <EntitySet Name="Islemler" EntityType="Self.Islemler" Schema="order" store:Type="Tables" />
+    <EntitySet Name="SiparisDetay" EntityType="Self.SiparisDetay" Schema="order" store:Type="Tables" />
+    <EntitySet Name="Siparisler" EntityType="Self.Siparisler" Schema="order" store:Type="Tables" />
+    <AssociationSet Name="FK_SiparisDetay_Siparisler" Association="Self.FK_SiparisDetay_Siparisler">
+      <End Role="Siparisler" EntitySet="Siparisler" />
+      <End Role="SiparisDetay" EntitySet="SiparisDetay" />
+    </AssociationSet>
+  </EntityContainer>
+</Schema>
